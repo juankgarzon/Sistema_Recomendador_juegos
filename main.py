@@ -19,8 +19,8 @@ df_items = pd.read_parquet('Dataset\df_user_reviews.parquet')
 def developer(desarrollador: str):    
 
     #Cargar los dataframes
-    df_games = pd.read_parquet('Dataset\df_steam_games.parquet') 
-    df_items = pd.read_parquet('Dataset\df_user_reviews.parquet')
+    df_games = pd.read_parquet('Dataset/df_steam_games.parquet') 
+    df_items = pd.read_parquet('Dataset/df_user_reviews.parquet')
     
     # Filtrar el DataFrame df_games por el desarrollador
     df_filtered = df_games[df_games['developer'] == desarrollador]
@@ -48,7 +48,7 @@ def developer(desarrollador: str):
 def recomendacion_juego(id: int):
 
      #Cargar el dataframe para aplicar el modelo
-    data_modelo = pd.read_parquet('Dataset\df_modelo_similitud.parquet') 
+    data_modelo = pd.read_parquet('Dataset/df_modelo_similitud.parquet') 
 
     # Primero, vamos a convertir la columna 'item_name' a una representación numérica usando TF-IDF (Frecuencia de Terminos - Freciencia Inversa de Terminos)
     vectorizer = TfidfVectorizer()
