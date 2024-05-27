@@ -10,9 +10,6 @@ app = FastAPI()
 app.title = "Machine Learning Operations"
 app.version = "1.0.0"
 
-df_games = pd.read_parquet('Dataset\df_steam_games.parquet') 
-df_items = pd.read_parquet('Dataset\df_user_reviews.parquet')
-
 # Ruta para consultar la cantidad de items y porcentaje de contenido Free por año según empresa desarrolladora
 @app.get("/developer/{desarrollador}")
 # Función para analizar los datos
@@ -20,8 +17,7 @@ def developer(desarrollador: str):
 
     #Cargar los dataframes
     df_games = pd.read_parquet('Dataset/df_steam_games.parquet') 
-    df_items = pd.read_parquet('Dataset/df_user_reviews.parquet')
-    
+        
     # Filtrar el DataFrame df_games por el desarrollador
     df_filtered = df_games[df_games['developer'] == desarrollador]
 
