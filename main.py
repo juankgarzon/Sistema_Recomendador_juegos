@@ -4,6 +4,7 @@ import pyarrow
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 
@@ -39,6 +40,78 @@ def developer(desarrollador: str):
     return result_dict
 
 
+# Ruta para consultar el usuario que acumula más horas jugadas para el género dado y una lista de la acumulación de horas jugadas por año de lanzamiento.
+@app.get("/UserForGenre/{genero}")
+# Función para analizar los datos
+def UserForGenre(genero: str):  
+     #Cargar los dataframes
+    merged_df = pd.read_parquet('Dataset/df_UserForGenre.parquet') 
+        
+     # Filtrar el DataFrame por el género dado
+    genre_df = merged_df[merged_df['genres'] == genero]
+    
+    # Si el DataFrame filtrado está vacío, retornar el formato esperado con valores nulos
+    if genre_df.empty:
+        return {"Usuario con más horas jugadas para Género " + genero: None, "Horas jugadas": []}
+    
+    # Agrupar por usuario y sumar las horas jugadas
+    user_hours = genre_df.groupby('id')['early_access'].sum()
+    
+    # Encontrar el usuario con más horas jugadas
+    max_user = user_hours.idxmax()
+    
+    # Agrupar por año y sumar las horas jugadas
+    year_hours = genre_df.groupby('year')['early_access'].sum().reset_index()
+    
+    # Formatear el resultado en la estructura solicitada
+    hours_per_year = [{"Año": row['year'], "Horas": row['early_access']} for _, row in year_hours.iterrows()]
+    
+    result = {
+        "Usuario con más horas jugadas para Género " + genero: max_user,
+        "Horas jugadas": hours_per_year
+    }
+    
+    return result
+
+# Ruta para aplicar el modelo de recomendacion aplicando la similitud del coseno
+@app.get("/ best_developer_year/{id}")
+def  best_developer_year(anio: int):
+
+    # Se carga el dataset para la ejecución del EndPont 
+    merged_df = pd.read_parquet('Dataset/df_best_developer_year.parquet') 
+
+    # Filtrar las filas donde 'year' es igual al año dado y 'reviews_recommend' es True
+    filtered_df = merged_df[(merged_df['year'] == anio) & (merged_df['reviews_recommend'] == True)]
+
+    # Contar recomendaciones por desarrollador
+    developer_counts = filtered_df['developer'].value_counts()
+
+    # Obtener los top 3 desarrolladores
+    top_3_developers = developer_counts.head(3)
+
+    # Formatear el resultado como un diccionario
+    result = {f"Puesto {i+1}": developer for i, developer in enumerate(top_3_developers.index)}      
+
+    return result
+
+
+# Ruta para aplicar el modelo de recomendacion aplicando la similitud del coseno
+@app.get("/developer_reviews_analysis/{desarrollador}")
+def developer_reviews_analysis(desarrollador: str):
+    # Se carga el dataset para la ejecución del EndPont 
+    merged_df = pd.read_parquet('Dataset/df_reseñas_desarrollador.parquet') 
+
+    # Filtrar por desarrolladora
+    filtered_df = merged_df[merged_df['developer'] == desarrollador]
+
+    # Contar las reseñas positivas y negativas
+    positive_reviews = filtered_df[filtered_df['reviews_recommend'] == True].shape[0]
+    negative_reviews = filtered_df[filtered_df['reviews_recommend'] == False].shape[0]
+    # Crear el diccionario de resultados
+    return {desarrollador: {'Negative': negative_reviews, 'Positive': positive_reviews}}
+
+
+
 # Ruta para aplicar el modelo de recomendacion aplicando la similitud del coseno
 @app.get("/recomendacion_juego/{id}")
 def recomendacion_juego(id: int):
@@ -70,13 +143,4 @@ def recomendacion_juego(id: int):
     resultado = score[1:6]
     total = data_modelo['item_name'].iloc[[i[0] for i in resultado]].tolist()
     return {'Juego Recomendado ': total}
-
-
-
-
-
-
- 
- 
-
-
+    
